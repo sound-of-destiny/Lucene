@@ -1,3 +1,4 @@
+package cn.edu.sdu.lucene;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.DirectoryReader;
@@ -9,7 +10,7 @@ import org.apache.lucene.store.RAMDirectory;
 
 import java.io.IOException;
 
-public class LuceneTopDirectory {
+public class LuceneRAMDirectory implements LuceneTop{
 
     private static final Directory directory = new RAMDirectory();
 
@@ -20,13 +21,6 @@ public class LuceneTopDirectory {
     public static IndexWriter getIndexWriter() throws IOException {
         Analyzer analyzer = new StandardAnalyzer();
         IndexWriterConfig config = new IndexWriterConfig(analyzer);
-        /*if (create){
-            config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
-        }else {
-            config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-        }*/
-
         return new IndexWriter(directory, config);
     }
-
 }
