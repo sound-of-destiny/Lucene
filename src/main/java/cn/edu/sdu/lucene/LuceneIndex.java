@@ -5,7 +5,7 @@ import org.apache.lucene.index.Term;
 
 import java.io.IOException;
 
-public class LuceneIndex extends LuceneRAMDirectory{
+public class LuceneIndex extends LuceneRAMDirectory {
 
     public void deleteIndex(String field, String keyword) throws IOException {
         IndexWriter iwriter = getIndexWriter();

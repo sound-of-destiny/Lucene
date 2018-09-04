@@ -1,20 +1,31 @@
 package cn.edu.sdu.lucene;
 
-import cn.edu.sdu.lucene.supnuevoVentas.SupnuevoVentasIndex;
+import cn.edu.sdu.lucene.supnuevoVentas.SupnuevoVentasSearch;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.search.spell.LevenshteinDistance;
+import org.apache.lucene.search.spell.LuceneDictionary;
+import org.apache.lucene.search.spell.SpellChecker;
+import org.apache.lucene.search.suggest.analyzing.AnalyzingInfixSuggester;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class TestMain {
     static {
         try {
-            IndexWriter iwriter = LuceneRAMDirectory.getIndexWriter();
+            LuceneRAMDirectory lrd = new LuceneRAMDirectory();
+            IndexWriter iwriter = lrd.getIndexWriter();
             Connection conn = LuceneUtils.openDb();
             Statement stm = conn.createStatement();
             String sql = "select a.priceId, a.ventasId, a.commodityId, a.codigoEntreno, a.price, a.priceBulto1, a.priceBulto2, "
@@ -46,8 +57,8 @@ public class TestMain {
                 doc.add(new Field("modifyTime", String.valueOf(res.getObject(13)), TextField.TYPE_STORED));
 
                 doc.add(new Field("descripcion", String.valueOf(res.getObject(14)), TextField.TYPE_STORED));
-                doc.add(new Field("catalogId", String.valueOf(res.getObject(15)), TextField.TYPE_STORED));
-                doc.add(new Field("tamano", String.valueOf(res.getObject(16)), TextField.TYPE_STORED));
+                doc.add(new Field("codigo", String.valueOf(res.getObject(15)), TextField.TYPE_STORED));
+                doc.add(new Field("catalogId", String.valueOf(res.getObject(16)), TextField.TYPE_STORED));
                 doc.add(new Field("codigoBulto1", String.valueOf(res.getObject(17)), TextField.TYPE_STORED));
                 doc.add(new Field("tamanoBulto1", String.valueOf(res.getObject(18)), TextField.TYPE_STORED));
                 doc.add(new Field("codigoBulto2", String.valueOf(res.getObject(19)), TextField.TYPE_STORED));
@@ -98,22 +109,61 @@ public class TestMain {
             }
             System.out.println(count);
             iwriter.close();
+            SpellChecker spellChecker = lrd.getSpellChecker();
+            IndexReader ireader = DirectoryReader.open(lrd.getDirectory());
+            IndexWriterConfig descripcionconfig = new IndexWriterConfig(new StandardAnalyzer());
+            IndexWriterConfig codigoconfig = new IndexWriterConfig(new StandardAnalyzer());
+            IndexWriterConfig nickNameconfig = new IndexWriterConfig(new StandardAnalyzer());
+            IndexWriterConfig razonconfig = new IndexWriterConfig(new StandardAnalyzer());
+            IndexWriterConfig nombreconfig = new IndexWriterConfig(new StandardAnalyzer());
 
-        } catch (
-                Exception e) {
+            spellChecker.indexDictionary(new LuceneDictionary(ireader, "descripcion"), descripcionconfig, false);
+            spellChecker.indexDictionary(new LuceneDictionary(ireader, "codigo"), codigoconfig, false);
+            spellChecker.indexDictionary(new LuceneDictionary(ireader, "nickName"), nickNameconfig, false);
+            spellChecker.indexDictionary(new LuceneDictionary(ireader, "razon"), razonconfig, false);
+            spellChecker.indexDictionary(new LuceneDictionary(ireader, "nombre"), nombreconfig, false);
+
+            spellChecker.setStringDistance(new LevenshteinDistance());
+            spellChecker.setAccuracy(0.5f);
+
+            AnalyzingInfixSuggester suggester = lrd.getSuggest();
+            suggester.build(new LuceneDictionary(ireader, "descripcion"));
+            suggester.build(new LuceneDictionary(ireader, "codigo"));
+            suggester.build(new LuceneDictionary(ireader, "nickName"));
+            suggester.build(new LuceneDictionary(ireader, "razon"));
+            suggester.build(new LuceneDictionary(ireader, "nombre"));
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public static void main(String[] args) {
         try {
-            LuceneSearch ls = new LuceneSearch();
-            ls.Query("CREM");
-            SupnuevoVentasIndex li = new SupnuevoVentasIndex();
+            SupnuevoVentasSearch svs = new SupnuevoVentasSearch();
+            LuceneSpellCheck lsc = new LuceneSpellCheck();
+            LuceneRAMDirectory lrd = new LuceneRAMDirectory();
+            LuceneSuggest ls = new LuceneSuggest();
+            LuceneToken lt = new LuceneToken();
+            String q = "tes";
+            List<String> a = ls.getSuggest(q);
+            ArrayList<String> ts = lt.getTokenString(q);
+            ArrayList<Document> res = new ArrayList<>();
+            for (String qt : ts) {
+                if (!lrd.getSpellChecker().exist(qt)) {
+                    res = svs.QueryCommodity(lsc.checkSpellRAM(qt));
+                }
+            }
+            for (Document doc : res) {
+                String price = doc.get("priceId");
+                String temp = price;
+            }
+            /*SupnuevoVentasIndex li = new SupnuevoVentasIndex();
             HashMap<String, String> map = new HashMap<>();
             map.put("descripcion", "NEW CREMA");
-            li.updateCommodityIndex(map);
-            ls.Query("CREM");
+            map.put("commodityId", "1");
+            li.updateCommodityIndex(map);*/
+            svs.Query("CREM");
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -5,6 +5,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class LuceneUtils {
+    public static final int spellCheckerNum = 3;
+    public static final int searchMaxNum = 100;
+    public static final int keywordMaxLength = 20;
 	/*public static Connection openDb() {
         Connection conn = null;
         do {

@@ -7,15 +7,12 @@ import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class LuceneSearch extends LuceneRAMDirectory{
+public class LuceneSearch extends LuceneRAMDirectory {
     public void Query(String keyword) {
         try {
             DirectoryReader ireader = DirectoryReader.open(getDirectory());
@@ -23,7 +20,9 @@ public class LuceneSearch extends LuceneRAMDirectory{
             Analyzer analyzer = new StandardAnalyzer();
             QueryParser parser = new QueryParser("descripcion", analyzer);
             Query query = parser.parse(keyword);
-            ScoreDoc[] hits = isearcher.search(query, 1000).scoreDocs;
+            TopDocs top = isearcher.search(query, 1000);
+
+            ScoreDoc[] hits = top.scoreDocs;
             System.out.println(hits.length);
 
             for (int i = 0; i < hits.length; i++) {
@@ -65,4 +64,5 @@ public class LuceneSearch extends LuceneRAMDirectory{
         ireader.close();
         return docList;
     }
+
 }

@@ -1,13 +1,49 @@
 package cn.edu.sdu.lucene.supnuevoVentas;
 
-import java.util.ArrayList;
-
+import cn.edu.sdu.lucene.LuceneSearch;
+import cn.edu.sdu.lucene.LuceneSpellCheck;
+import cn.edu.sdu.lucene.LuceneToken;
 import org.apache.lucene.document.Document;
 
-import cn.edu.sdu.lucene.LuceneSearch;
+import java.util.ArrayList;
 
 public class SupnuevoVentasSearch extends LuceneSearch {
-	public ArrayList<Document> QueryCommodity(String keyword) {
+
+    public ArrayList<Document> spellQueryCommodity(String keyword) {
+        ArrayList<Document> res = new ArrayList<>();
+        try {
+            LuceneToken lt = new LuceneToken();
+            LuceneSpellCheck lsc = new LuceneSpellCheck();
+            ArrayList<String> ts = lt.getTokenString(keyword);
+            for (String qt : ts) {
+                if (!getSpellChecker().exist(qt)) {
+                    res = QueryCommodity(lsc.checkSpellRAM(qt));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    public ArrayList<Document> spellQueryVentas(String keyword) {
+        ArrayList<Document> res = new ArrayList<>();
+        try {
+            LuceneToken lt = new LuceneToken();
+            LuceneSpellCheck lsc = new LuceneSpellCheck();
+            ArrayList<String> ts = lt.getTokenString(keyword);
+            for (String qt : ts) {
+                if (!getSpellChecker().exist(qt)) {
+                    res = QueryVentas(lsc.checkSpellRAM(qt));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    public ArrayList<Document> QueryCommodity(String keyword) {
         ArrayList<Document> docList = new ArrayList<>();
         String[] fields = {"descripcion", "codigo"};
         try {
@@ -29,10 +65,10 @@ public class SupnuevoVentasSearch extends LuceneSearch {
         return docList;
     }
 
-    public ArrayList<Document> QueryCommodityId(String string) {
+    public ArrayList<Document> QueryCommodityId(String commodityId) {
         ArrayList<Document> docList = new ArrayList<>();
         try {
-            docList = QueryTerm("commodityId", string);
+            docList = QueryTerm("commodityId", commodityId);
         } catch (Exception e) {
             e.printStackTrace();
         }
